@@ -57,6 +57,7 @@ import com.ning.http.util.ProxyUtils;
 import com.ning.http.util.SslUtils;
 import com.ning.http.util.UTF8UrlEncoder;
 import com.ning.org.jboss.netty.handler.codec.http.CookieDecoder;
+import com.ning.org.jboss.netty.handler.codec.http.CookieEncoder;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
@@ -77,7 +78,6 @@ import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.channel.socket.oio.OioClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.http.CookieEncoder;
 import org.jboss.netty.handler.codec.http.DefaultCookie;
 import org.jboss.netty.handler.codec.http.DefaultHttpChunkTrailer;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
@@ -753,7 +753,7 @@ public class NettyAsyncHttpProvider extends SimpleChannelUpstreamHandler impleme
 
         if (!m.equals(HttpMethod.CONNECT)) {
             if (isNonEmpty(request.getCookies())) {
-                CookieEncoder httpCookieEncoder = new CookieEncoder(false);
+                CookieEncoder httpCookieEncoder = new CookieEncoder();
                 Iterator<Cookie> ic = request.getCookies().iterator();
                 Cookie c;
                 org.jboss.netty.handler.codec.http.Cookie cookie;

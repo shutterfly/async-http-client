@@ -14,7 +14,6 @@ package com.ning.org.jboss.netty.handler.codec.http;
 
 import java.util.Set;
 
-import org.jboss.netty.handler.codec.http.CookieEncoder;
 import org.jboss.netty.handler.codec.http.DefaultCookie;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -110,7 +109,7 @@ public class CookieDecoderTest {
   }
 
   private CookieEncoder makeCookieEncoderForClient() {
-    return new CookieEncoder(false);
+    return new CookieEncoder();
   }
 
 }
