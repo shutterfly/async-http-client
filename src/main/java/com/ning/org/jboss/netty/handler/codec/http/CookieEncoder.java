@@ -110,7 +110,7 @@ public class CookieEncoder {
        *   name of Path and an attribute-value of cookie-path.
        */
       if (cookie.getPath() != null && !cookie.getPath().equals("/")) {
-        add(sb, '$' + CookieHeaderNames.PATH.toLowerCase(), cookie.getPath());
+        add(sb, '$' + CookieHeaderNames.PATH, cookie.getPath());
       }
 
       if (cookie.getDomain() != null) {
