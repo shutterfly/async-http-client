@@ -24,10 +24,7 @@ public class CookieDecoderTest {
     
     @Test(groups = "fast")
     public void testDecodeUnquoted() {
-        Set<Cookie> cookies = CookieDecoder.decode("foo=value; domain=/; path=/");
-        Assert.assertEquals(cookies.size(), 1);
-
-        Cookie first = cookies.iterator().next();
+      Cookie first = decodeOneCookie("foo=value; domain=/; path=/");
         Assert.assertEquals(first.getValue(), "value");
         Assert.assertEquals(first.getDomain(), "/");
         Assert.assertEquals(first.getPath(), "/");
@@ -36,10 +33,7 @@ public class CookieDecoderTest {
     @Test(groups = "fast")
     public void testDecodeNontrivialUnquotedValues() {
         String value = "xAWH1b3RKrqo8AE/EbYaKBLdwZe2p5NKjJHPlQZ48BgFF6/CR8lKFTQv0TEhVIpxLL3b1Wd3dpMH";
-        Set<Cookie> cookies = CookieDecoder.decode("foo=" + value + "; domain=/; path=/");
-        Assert.assertEquals(cookies.size(), 1);
-
-        Cookie first = cookies.iterator().next();
+      Cookie first = decodeOneCookie("foo=" + value + "; domain=/; path=/");
         Assert.assertEquals(first.getValue(), value);
         Assert.assertEquals(first.getDomain(), "/");
         Assert.assertEquals(first.getPath(), "/");
@@ -47,19 +41,13 @@ public class CookieDecoderTest {
 
     @Test(groups = "fast")
     public void testDecodeQuoted() {
-        Set<Cookie> cookies = CookieDecoder.decode("ALPHA=\"VALUE1\"; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly");
-        Assert.assertEquals(cookies.size(), 1);
-
-        Cookie first = cookies.iterator().next();
+      Cookie first = decodeOneCookie("ALPHA=\"VALUE1\"; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly");
         Assert.assertEquals(first.getValue(), "VALUE1");
     }
 
     @Test(groups = "fast")
     public void testDecodeQuotedContainingEscapedQuote() {
-        Set<Cookie> cookies = CookieDecoder.decode("ALPHA=\"VALUE1\\\"\"; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly");
-        Assert.assertEquals(cookies.size(), 1);
-
-        Cookie first = cookies.iterator().next();
+      Cookie first = decodeOneCookie("ALPHA=\"VALUE1\\\"\"; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly");
         Assert.assertEquals(first.getValue(), "VALUE1\"");
     }
 
@@ -103,13 +91,61 @@ public class CookieDecoderTest {
       Cookie roundTrippedCookie = roundTrippedCookies.iterator().next();
       Assert.assertEquals(cookieName, roundTrippedCookie.getName());
       Assert.assertEquals(expectedValue, roundTrippedCookie.getValue());
-      Assert.assertEquals("/", roundTrippedCookie.getPath());
+      Assert.assertNull(roundTrippedCookie.getPath(),
+          "a path=/ will be 'lost' during roundtripping because rfc6265, section 5.2.4 says '/' should be treated as the default");
     }
 
   }
 
   private CookieEncoder makeCookieEncoderForClient() {
     return new CookieEncoder();
+  }
+
+  @Test
+  public void testCookiesHandledLikeFirefox20_JSESSIONID(){
+    //JSESSIONID=9C827DD791A2E7E8875A0881A05A7DDB; Path=/; HttpOnly
+    String setCookieStr = "JSESSIONID=9C827DD791A2E7E8875A0881A05A7DDB; Path=/; HttpOnly";
+    Cookie cookie = decodeOneCookie(setCookieStr);
+    Assert.assertEquals(cookie.getName(), "JSESSIONID");
+    Assert.assertEquals(cookie.getValue(), "9C827DD791A2E7E8875A0881A05A7DDB");
+    Assert.assertNull(cookie.getDomain());
+    Assert.assertEquals(cookie.getPath(), "/");
+
+    String reEncodedCookieStr = encode(cookie);
+
+    Assert.assertEquals(reEncodedCookieStr, "JSESSIONID=9C827DD791A2E7E8875A0881A05A7DDB");
+
+  }
+
+  @Test
+  public void testCookiesHandledLikeFirefox20_BIGipServer(){
+    //BIGipServerAPP1-A-LR.FOXTROT=FfWZLexNlW5LuwV8kaCXrO6b44/ZiJV05ZNVophFlDa+b0zvj22WJIHSb+w7Dj5JxiivbJksSB1h0g==; path=/
+    String setCookieStr = "BIGipServerAPP1-A-LR.FOXTROT=FfWZLexNlW5LuwV8kaCXrO6b44/ZiJV05ZNVophFlDa+b0zvj22WJIHSb+w7Dj5JxiivbJksSB1h0g==; path=/";
+    Cookie cookie = decodeOneCookie(setCookieStr);
+    Assert.assertEquals(cookie.getName(), "BIGipServerAPP1-A-LR.FOXTROT");
+    Assert.assertEquals(cookie.getValue(), "FfWZLexNlW5LuwV8kaCXrO6b44/ZiJV05ZNVophFlDa+b0zvj22WJIHSb+w7Dj5JxiivbJksSB1h0g==");
+    Assert.assertNull(cookie.getDomain());
+    Assert.assertEquals(cookie.getPath(), "/");
+
+    String reEncodedCookieStr = encode(cookie);
+
+    Assert.assertEquals(reEncodedCookieStr, "BIGipServerAPP1-A-LR.FOXTROT=FfWZLexNlW5LuwV8kaCXrO6b44/ZiJV05ZNVophFlDa+b0zvj22WJIHSb+w7Dj5JxiivbJksSB1h0g==");
+  }
+
+  private String encode(Cookie cookie) {
+    DefaultCookie cookieDTO = new DefaultCookie(cookie.getName(), cookie.getValue());
+    cookieDTO.setPath(cookie.getPath());
+    cookieDTO.setDomain(cookie.getDomain());
+    CookieEncoder encoder = new CookieEncoder();
+    encoder.addCookie(cookieDTO);
+    return encoder.encode();
+  }
+
+  private Cookie decodeOneCookie(String setCookieStr) {
+    Set<Cookie> cookies = CookieDecoder.decode(setCookieStr);
+    Assert.assertEquals(cookies.size(), 1);
+
+    return cookies.iterator().next();
   }
 
 }

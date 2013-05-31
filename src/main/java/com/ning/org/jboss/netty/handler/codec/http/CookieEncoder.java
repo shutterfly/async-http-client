@@ -91,7 +91,25 @@ public class CookieEncoder {
 
       addSimple(sb, cookie.getName(), cookie.getValue());
 
-      if (cookie.getPath() != null) {
+      /* http://www.ietf.org/rfc/rfc6265.txt
+       *
+       * 5.2.4.  The Path Attribute
+       *   If the attribute-name case-insensitively matches the string "Path",
+       *   the user agent MUST process the cookie-av as follows.
+       *
+       *   If the attribute-value is empty or if the first character of the
+       *   attribute-value is not %x2F ("/"):
+       *
+       *     Let cookie-path be the default-path.
+       *
+       *   Otherwise:
+       *
+       *     Let cookie-path be the attribute-value.
+       *
+       *   Append an attribute to the cookie-attribute-list with an attribute-
+       *   name of Path and an attribute-value of cookie-path.
+       */
+      if (cookie.getPath() != null && !cookie.getPath().equals("/")) {
         add(sb, '$' + CookieHeaderNames.PATH.toLowerCase(), cookie.getPath());
       }
 
