@@ -151,7 +151,7 @@ public class CookieEncoder {
       switch (c) {
         case '\t':
         case ' ':
-        case '"':
+        /*case '"':*/
         case '(':
         case ')':
         case ',':

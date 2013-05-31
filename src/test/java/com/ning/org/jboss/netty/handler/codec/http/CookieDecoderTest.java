@@ -42,13 +42,13 @@ public class CookieDecoderTest {
     @Test(groups = "fast")
     public void testDecodeQuoted() {
       Cookie first = decodeOneCookie("ALPHA=\"VALUE1\"; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly");
-        Assert.assertEquals(first.getValue(), "VALUE1");
+        Assert.assertEquals(first.getValue(), "\"VALUE1\"");
     }
 
     @Test(groups = "fast")
     public void testDecodeQuotedContainingEscapedQuote() {
       Cookie first = decodeOneCookie("ALPHA=\"VALUE1\\\"\"; Domain=docs.foo.com; Path=/accounts; Expires=Wed, 13-Jan-2021 22:23:01 GMT; Secure; HttpOnly");
-        Assert.assertEquals(first.getValue(), "VALUE1\"");
+        Assert.assertEquals(first.getValue(), "\"VALUE1\"\"");
     }
 
   @Test(groups = "fast")
@@ -131,6 +131,41 @@ public class CookieDecoderTest {
 
     Assert.assertEquals(reEncodedCookieStr, "BIGipServerAPP1-A-LR.FOXTROT=FfWZLexNlW5LuwV8kaCXrO6b44/ZiJV05ZNVophFlDa+b0zvj22WJIHSb+w7Dj5JxiivbJksSB1h0g==");
   }
+
+  @Test
+  public void testCookiesHandledLikeFirefox20_sflyversion(){
+    //sflyversion_foxtrot="O"; Domain=.foxtrot.shutterfly.com; Path=/
+    String setCookieStr = "sflyversion_foxtrot=\"E\"; Domain=.foxtrot.shutterfly.com; Path=/";
+    Cookie cookie = decodeOneCookie(setCookieStr);
+    Assert.assertEquals(cookie.getName(), "sflyversion_foxtrot");
+    Assert.assertEquals(cookie.getValue(), "\"E\"");
+    Assert.assertEquals(cookie.getDomain(), ".foxtrot.shutterfly.com");
+    Assert.assertEquals(cookie.getPath(), "/");
+
+    String reEncodedCookieStr = encode(cookie);
+
+    //Firefox 20 actually sends:
+    // Assert.assertEquals(reEncodedCookieStr, "sflyversion_foxtrot=\"E\"");, but we'll let $Domain fly for now
+    Assert.assertEquals(reEncodedCookieStr, "sflyversion_foxtrot=\"E\"; $Domain=.foxtrot.shutterfly.com");
+  }
+
+/*
+  @Test
+  public void testCookiesHandledLikeFirefox20_masterServer(){
+    //masterServer_foxtrot="serverName:www.foxtrot.shutterfly.com&sessionId:9C827DD791A2E7E8875A0881A05A7DDB&serverIP:172.30.96.6"; Version=1; Domain=.foxtrot.shutterfly.com; Path=/
+    String setCookieStr = "masterServer_foxtrot=\"serverName:www.foxtrot.shutterfly.com&sessionId:9C827DD791A2E7E8875A0881A05A7DDB&serverIP:172.30.96.6\"; Version=1; Domain=.foxtrot.shutterfly.com; Path=/";
+    Cookie cookie = decodeOneCookie(setCookieStr);
+    Assert.assertEquals(cookie.getName(), "masterServer_foxtrot");
+    Assert.assertEquals(cookie.getValue(), "\"serverName:www.foxtrot.shutterfly.com&sessionId:9C827DD791A2E7E8875A0881A05A7DDB&serverIP:172.30.96.6\"");
+    Assert.assertEquals(cookie.getDomain(), ".foxtrot.shutterfly.com");
+    Assert.assertEquals(cookie.getPath(), "/");
+    Assert.assertEquals(cookie.getVersion(), 1);
+
+    String reEncodedCookieStr = encode(cookie);
+
+    Assert.assertEquals(reEncodedCookieStr, "masterServer_foxtrot=\"serverName:www.foxtrot.shutterfly.com&sessionId:9C827DD791A2E7E8875A0881A05A7DDB&serverIP:172.30.96.6\"");
+  }
+*/
 
   private String encode(Cookie cookie) {
     DefaultCookie cookieDTO = new DefaultCookie(cookie.getName(), cookie.getValue());

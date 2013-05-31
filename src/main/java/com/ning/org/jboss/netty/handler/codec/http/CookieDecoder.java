@@ -238,11 +238,13 @@ public class CookieDecoder {
                         if (c == '"' || c == '\'') {
                             // NAME="VALUE" or NAME='VALUE'
                             StringBuilder newValueBuf = new StringBuilder(header.length() - i);
+                            newValueBuf.append(c);
                             final char q = c;
                             boolean hadBackslash = false;
                             i++;
                             for (;;) {
                                 if (i == headerLen) {
+                                    newValueBuf.append(c);
                                     value = newValueBuf.toString();
                                     break keyValLoop;
                                 }
@@ -263,6 +265,7 @@ public class CookieDecoder {
                                 } else {
                                     c = header.charAt(i++);
                                     if (c == q) {
+                                        newValueBuf.append(c);
                                         value = newValueBuf.toString();
                                         break keyValLoop;
                                     }
